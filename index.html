@@ -782,19 +782,47 @@ function copy(text,msg){
 }
 
 function renderSeeds(){
-  const box=$("#extraSeeds"); box.innerHTML="";
-  state.seeds.slice(1).forEach((hex,i)=>{
-    const wrap=el("label","fld");
-    wrap.appendChild(el("span","fld-lab",i===0?"Secondary anchor":"Accent anchor"));
-    const row=el("div","seed-extra");
-    const tx=el("input"); tx.type="text"; tx.value=hex; tx.maxLength=7;
-    const pk=el("input"); pk.type="color"; pk.value=hex;
-    const del=el("button","chip-del","&times;"); del.title="Remove"; del.type="button";
-    tx.oninput=()=>{if(hexToRgb(tx.value)){state.seeds[i+1]=rgbToHex(hexToRgb(tx.value));pk.value=state.seeds[i+1];render();}};
-    pk.oninput=()=>{state.seeds[i+1]=pk.value.toUpperCase();tx.value=state.seeds[i+1];render();};
-    del.onclick=()=>{state.seeds.splice(i+1,1);render();};
-    row.append(tx,pk,del); wrap.appendChild(row); box.appendChild(wrap);
-  });
+  const box=$("#extraSeeds");
+  const need=state.seeds.length-1;
+
+  /* Only rebuild when a seed is added or removed. Rebuilding on every input
+     event destroys the <input type=color> node the OS picker is anchored to,
+     which slams the picker shut the moment you touch the wheel. */
+  if(box.childElementCount!==need){
+    box.innerHTML="";
+    state.seeds.slice(1).forEach((hex,i)=>{
+      const wrap=el("label","fld");
+      wrap.appendChild(el("span","fld-lab",i===0?"Secondary anchor":"Accent anchor"));
+      const row=el("div","seed-extra");
+      const tx=el("input"); tx.type="text"; tx.value=hex; tx.maxLength=7;
+      const pk=el("input"); pk.type="color"; pk.value=hex;
+      const del=el("button","chip-del","&times;"); del.title="Remove"; del.type="button";
+      tx.oninput=()=>{
+        const c=hexToRgb(tx.value);
+        if(!c) return;
+        state.seeds[i+1]=rgbToHex(c);
+        pk.value=state.seeds[i+1];
+        render();
+      };
+      pk.oninput=()=>{
+        state.seeds[i+1]=pk.value.toUpperCase();
+        tx.value=state.seeds[i+1];
+        renderSoon();
+      };
+      del.onclick=()=>{state.seeds.splice(i+1,1);render();};
+      row.append(tx,pk,del); wrap.appendChild(row); box.appendChild(wrap);
+    });
+  }else{
+    /* Same number of seeds: keep the live nodes, just sync their values.
+       Never write back into whatever the person is currently interacting with. */
+    [...box.children].forEach((wrap,i)=>{
+      const hex=state.seeds[i+1];
+      const [tx,pk]=wrap.querySelectorAll("input");
+      if(document.activeElement!==tx && tx.value.toUpperCase()!==hex) tx.value=hex;
+      if(document.activeElement!==pk && pk.value.toUpperCase()!==hex) pk.value=hex;
+    });
+  }
+
   const add=$("#addSeed");
   add.disabled=state.seeds.length>=3;
   add.style.opacity=state.seeds.length>=3?.45:1;
@@ -1088,6 +1116,14 @@ function render(){
   renderType(); renderPreview(); renderExport();
 }
 
+/* Colour pickers fire `input` continuously while you drag. Coalesce those into
+   one render per frame instead of recomputing five ramps and the matrix per event. */
+let _frame=null;
+function renderSoon(){
+  if(_frame) return;
+  _frame=requestAnimationFrame(()=>{ _frame=null; render(); });
+}
+
 $("#themeBtn").onclick=()=>{
   const dark=document.documentElement.classList.toggle("dark");
   $("#themeBtn").textContent=dark?"Light":"Dark";
@@ -1097,7 +1133,9 @@ $("#seedHex").addEventListener("input",e=>{
   if(c){state.seeds[0]=rgbToHex(c);$("#seedPick").value=state.seeds[0];render();}
 });
 $("#seedPick").addEventListener("input",e=>{
-  state.seeds[0]=e.target.value.toUpperCase();$("#seedHex").value=state.seeds[0];render();
+  state.seeds[0]=e.target.value.toUpperCase();
+  $("#seedHex").value=state.seeds[0];
+  renderSoon();
 });
 $("#addSeed").onclick=()=>{
   if(state.seeds.length>=3) return;
