@@ -108,6 +108,31 @@ html.dark .mark img{filter:invert(1)}
 .top-nav a{color:var(--muted-foreground);text-decoration:none;transition:color .12s}
 .top-nav a:hover,.top-nav a:focus-visible{color:var(--foreground)}
 
+/* ---------- intro band ---------- */
+.intro{border-bottom:1px solid var(--border);background:var(--surface)}
+.intro-in{padding:var(--s5) var(--s5)}
+.intro-lead{
+  font-size:clamp(16px,2.4vw,21px);font-weight:600;letter-spacing:-.02em;
+  margin-bottom:var(--s4);color:var(--foreground);white-space:nowrap;
+}
+@media (max-width:480px){
+  .intro-lead{white-space:normal}
+}
+.intro-steps{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5)}
+.intro-step{
+  display:flex;align-items:center;gap:9px;
+  font-size:13.5px;color:var(--muted-foreground);
+}
+.intro-step b{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:20px;height:20px;flex:none;border-radius:50%;
+  background:var(--primary);color:var(--primary-foreground);
+  font-family:var(--font-mono);font-size:11px;font-weight:600;
+}
+@media (max-width:560px){
+  .intro-steps{flex-direction:column;gap:var(--s3)}
+}
+
 /* ---------- sections ---------- */
 section.step{padding:var(--s8) 0;border-bottom:1px solid var(--border)}
 section.step:last-of-type{border-bottom:none;padding-bottom:var(--s8)}
@@ -316,6 +341,18 @@ pre.out{
     <button id="themeBtn" aria-label="Switch theme">Dark</button>
   </div>
 </header>
+
+<section class="intro">
+  <div class="wrap intro-in">
+    <p class="intro-lead">Give Orbit one color, get a whole brand system back</p>
+    <div class="intro-steps">
+      <span class="intro-step"><b>1</b> Five brand colors, with hex and RGB</span>
+      <span class="intro-step"><b>2</b> Tint &amp; shade ramps in 10% steps</span>
+      <span class="intro-step"><b>3</b> Contrast-checked color pairings</span>
+      <span class="intro-step"><b>4</b> A matched three-font type suite</span>
+    </div>
+  </div>
+</section>
 
 <main class="wrap">
 
